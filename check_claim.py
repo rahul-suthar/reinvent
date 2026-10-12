@@ -48,29 +48,18 @@ def assess_claim(row: dict[str, str]) -> str:
         api_key=api_key,
         base_url="https://openrouter.ai/api/v1",
     )
-    model = os.environ.get("OPENROUTER_MODEL", "openai/gpt-4o-mini")
+    model = os.environ.get("OPENROUTER_MODEL")
+    if not model:
+        raise RuntimeError("Set OPENROUTER_MODEL in .env to the OpenRouter model ID to use.")
     response = client.chat.completions.create(
         model=model,
         temperature=0,
         max_tokens=500,
         messages=[
             {
-                "role": "system",
-                "content": (
-                   """You are an AWS re:Invent claim verifier.
-                    Evaluate the claim using only the supplied or retrieved evidence.
-                    Never invent facts or sources. Return exactly ONE concise briefing of 1 to 3 lines,
-                    combining the verdict, key explanation, source URL (if verified), and confidence.
-                    Mention the most important evidence gap only if relevant. Use plain language,
-                    no headings, bullets, separate fields, or introductory text. Distinguish unsupported
-                    claims from claims that remain unverified. Consider the evaluation date when assessing dates.Maximum 60 words."""
-                ),
-            },
-            {
                 "role": "user",
                 "content": (
-                    "Is this a real AWS launch? Assess the claim and briefly explain "
-                    "your confidence and evidence limitations.\n\n"
+                    "Is this a real AWS launch? Answer yes or no, and name the page that proves it."
                     f"Candidate ID: {row['candidate_id']}\n"
                     f"Claim: {row['claim_text']}\n"
                     f"Claim type: {row['claim_type']}\n"

@@ -1,6 +1,6 @@
 # re:Invent claim check
 
 - Model: `anthropic/claude-sonnet-5.5`
-- Answer: Unverified, and likely false as framed. The only source is the generic Hacker News homepage, which is not evidence of an announcement. us-east-1 already exists, and AWS offers quantum access through the Braket service rather than a dedicated "quantum Region." Confidence is moderate-low. Icould not check re:Invent 2025 announcements.
-- Trace: https://smith.langchain.com/public/b68ae874-c747-4044-be74-781e84e5e084/r/01a12df5-d099-7111-aa54-c847f8ed5402?start_time=2026-10-12T02%3A34%3A06.873237Z
-- Source check: None verified.
+- Answer: No. I can't point to a page that proves this launch, and the claim doesn't hold up."Quantum computing Region in us-east-1" is incoherent. us-east-1 (N. Virginia) is AWS's oldest Region, launched in 2006. AWS doesn't create service-specific Regions inside an existing Region. New Regions are general-purpose, with their own Availability Zones.
+- Trace: https://smith.langchain.com/public/696a2cc2-8ca8-4331-9d4b-dd3c968902c0/r/01a12e1d-26f1-7020-849a-5d91c8dccb4a?start_time=2026-10-12T03%3A17%3A04.881973Z
+- Source check: Can't find a real page to prove this launch.
