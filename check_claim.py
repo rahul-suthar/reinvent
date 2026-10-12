@@ -37,9 +37,9 @@ def load_claim(candidate_id: str = "C-02") -> dict[str, str]:
     raise ValueError(f"Candidate {candidate_id!r} was not found in {DATA_PATH}")
 
 
-@traceable(name="check_aws_launch_claim", run_type="chain")
-def assess_claim(row: dict[str, str]) -> str:
-    """Assess a candidate claim; the row and response are captured in LangSmith."""
+@traceable(name="check_aws_launch_claim", run_type="llm")
+def assess_claim(model: str, messages: list[dict[str, str]]) -> str:
+    """Call OpenRouter and trace the exact model ID, messages, and response."""
     api_key = os.environ.get("OPENROUTER_API_KEY")
     if not api_key:
         raise RuntimeError("Set OPENROUTER_API_KEY in .env before running this script.")
@@ -48,28 +48,11 @@ def assess_claim(row: dict[str, str]) -> str:
         api_key=api_key,
         base_url="https://openrouter.ai/api/v1",
     )
-    model = os.environ.get("OPENROUTER_MODEL")
-    if not model:
-        raise RuntimeError("Set OPENROUTER_MODEL in .env to the OpenRouter model ID to use.")
     response = client.chat.completions.create(
         model=model,
         temperature=0,
         max_tokens=500,
-        messages=[
-            {
-                "role": "user",
-                "content": (
-                    "Is this a real AWS launch? Answer yes or no, and name the page that proves it."
-                    f"Candidate ID: {row['candidate_id']}\n"
-                    f"Claim: {row['claim_text']}\n"
-                    f"Claim type: {row['claim_type']}\n"
-                    f"Origin: {row['origin_source_name']} ({row['origin_source_type']})\n"
-                    f"Source URL: {row['origin_source_url']}\n"
-                    f"Published: {row['origin_published_date']}\n"
-                    f"Today's Date: {TODAY}"
-                ),
-            },
-        ],
+        messages=messages,
     )
     return response.choices[0].message.content or "The model returned an empty response."
 
@@ -78,12 +61,28 @@ def main() -> None:
     load_dotenv(ROOT / ".env")
     if not os.environ.get("LANGSMITH_API_KEY"):
         raise RuntimeError("Set LANGSMITH_API_KEY in .env to record the trace.")
-    os.environ.setdefault("LANGSMITH_TRACING", "true")
-    os.environ.setdefault("LANGSMITH_PROJECT", "reinvent")
 
     row = load_claim("C-02")
+    model = os.environ.get("OPENROUTER_MODEL")
+    if not model:
+        raise RuntimeError("Set OPENROUTER_MODEL in .env to the OpenRouter model ID to use.")
+    messages = [
+        {
+            "role": "user",
+            "content": (
+                "Is this a real AWS launch? Answer yes or no, and name the page that proves it.\n"
+                f"Candidate ID: {row['candidate_id']}\n"
+                f"Claim: {row['claim_text']}\n"
+                f"Claim type: {row['claim_type']}\n"
+                f"Origin: {row['origin_source_name']} ({row['origin_source_type']})\n"
+                f"Source URL: {row['origin_source_url']}\n"
+                f"Published: {row['origin_published_date']}\n"
+                f"Today's Date: {TODAY}"
+            ),
+        },
+    ]
     print(f"Checking {row['candidate_id']}: {row['claim_text']}\n")
-    print(assess_claim(row))
+    print(assess_claim(model, messages))
     print("\nAssessment generated.")
     print(
         "LangSmith tracing is enabled, but check the LangSmith dashboard "
